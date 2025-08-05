@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Tareas v3 - Kindle Scribe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Georgia, serif;
+            background-color: #FFFFFF;
+            color: #000000;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #container {
+            width: 100vh;
+            height: 100vw;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-origin: center center;
+            transition: transform 0.3s ease;
+        }
+
+        /* Modo Vista (landscape simulado) */
+        #container.landscape-mode {
+            transform: translate(-50%, -50%) rotate(90deg);
+        }
+
+        /* Modo Edición (vertical normal) */
+        #container:not(.landscape-mode) {
+            transform: translate(-50%, -50%);
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .app-content {
+            width: 100%;
+            height: 100%;
+            padding: 30px 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Botón de edición flotante */
+        #editButton {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 2.5rem;
+            padding: 15px 30px;
+            background-color: #000000;
+            color: #FFFFFF;
+            border: none;
+            cursor: pointer;
+            font-weight: normal;
+            letter-spacing: 1px;
+        }
+
+        #editButton:active {
+            background-color: #333333;
+        }
+
+        /* Título minimalista */
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: normal;
+            letter-spacing: 2px;
+            opacity: 0.8;
+        }
+
+        /* Panel de edición (oculto por defecto) */
+        .edit-panel {
+            display: none;
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: #F5F5F5;
+            border: 2px solid #000000;
+        }
+
+        .edit-panel.active {
+            display: block;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 15px;
+        }
+
+        #taskInput {
+            flex: 1;
+            font-size: 2.5rem;
+            padding: 15px;
+            border: 3px solid #000000;
+            background-color: #FFFFFF;
+            color: #000000;
+            font-family: Georgia, serif;
+        }
+
+        #addButton {
+            font-size: 2.5rem;
+            padding: 15px 30px;
+            background-color: #000000;
+            color: #FFFFFF;
+            border: none;
+            cursor: pointer;
+            font-weight: normal;
+            letter-spacing: 1px;
+        }
+
+        #addButton:active {
+            background-color: #333333;
+        }
+
+        /* Lista de tareas elegante */
+        #taskList {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .task-item {
+            font-size: 3.5rem;
+            padding: 35px 30px;
+            border-bottom: 2px solid #E0E0E0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            line-height: 1.3;
+            transition: all 0.2s ease;
+        }
+
+        .task-item:hover {
+            background-color: #FAFAFA;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item.completed {
+            text-decoration: line-through;
+            opacity: 0.4;
+        }
+
+        .task-text {
+            flex: 1;
+            margin-right: 20px;
+            font-weight: normal;
+        }
+
+        .delete-button {
+            font-size: 2rem;
+            padding: 8px 15px;
+            background-color: transparent;
+            color: #000000;
+            border: 2px solid #000000;
+            cursor: pointer;
+            font-weight: bold;
+            min-width: 50px;
+            opacity: 0.6;
+            transition: opacity 0.2s ease;
+        }
+
+        .delete-button:hover {
+            opacity: 1;
+        }
+
+        .delete-button:active {
+            background-color: #000000;
+            color: #FFFFFF;
+        }
+
+        .empty-message {
+            font-size: 2.5rem;
+            text-align: center;
+            padding: 60px;
+            opacity: 0.3;
+            font-style: italic;
+        }
+
+        /* Contador de tareas */
+        .task-counter {
+            position: absolute;
+            bottom: 30px;
+            left: 40px;
+            font-size: 1.8rem;
+            opacity: 0.5;
+            letter-spacing: 1px;
+        }
+
+        /* Ajustes para modo edición (vertical) */
+        #container:not(.landscape-mode) .app-content {
+            padding: 20px 30px;
+        }
+
+        #container:not(.landscape-mode) h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        #container:not(.landscape-mode) #editButton {
+            font-size: 1.8rem;
+            padding: 10px 20px;
+            top: 20px;
+            right: 30px;
+        }
+
+        #container:not(.landscape-mode) #taskInput {
+            font-size: 1.8rem;
+            padding: 12px;
+        }
+
+        #container:not(.landscape-mode) #addButton {
+            font-size: 1.8rem;
+            padding: 12px 25px;
+        }
+
+        #container:not(.landscape-mode) .task-item {
+            font-size: 2.2rem;
+            padding: 20px;
+        }
+
+        #container:not(.landscape-mode) .delete-button {
+            font-size: 1.5rem;
+            padding: 5px 10px;
+        }
+
+        #container:not(.landscape-mode) .empty-message {
+            font-size: 1.8rem;
+            padding: 40px;
+        }
+
+        #container:not(.landscape-mode) .task-counter {
+            font-size: 1.3rem;
+            bottom: 20px;
+            left: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container" class="landscape-mode">
+        <div class="app-content">
+            <button id="editButton">EDITAR</button>
+            
+            <h1>Tareas</h1>
+            
+            <div class="edit-panel" id="editPanel">
+                <div class="input-container">
+                    <input type="text" id="taskInput" placeholder="Nueva tarea...">
+                    <button id="addButton">AÑADIR</button>
+                </div>
+            </div>
+            
+            <ul id="taskList"></ul>
+            
+            <div class="task-counter" id="taskCounter"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Variables globales
+        var tasks = [];
+        var taskList = document.getElementById('taskList');
+        var taskInput = document.getElementById('taskInput');
+        var addButton = document.getElementById('addButton');
+        var editButton = document.getElementById('editButton');
+        var editPanel = document.getElementById('editPanel');
+        var taskCounter = document.getElementById('taskCounter');
+        var container = document.getElementById('container');
+        var isEditMode = false;
+        
+        // Control de modos vista/edición
+        function enterEditMode() {
+            container.classList.remove('landscape-mode');
+            editPanel.classList.add('active');
+            editButton.textContent = 'CERRAR';
+            isEditMode = true;
+            updateTaskCounter();
+        }
+        
+        function enterViewMode() {
+            container.classList.add('landscape-mode');
+            editPanel.classList.remove('active');
+            editButton.textContent = 'EDITAR';
+            isEditMode = false;
+            taskInput.blur();
+            updateTaskCounter();
+        }
+        
+        // Toggle del modo edición
+        function toggleEditMode() {
+            if (isEditMode) {
+                enterViewMode();
+            } else {
+                enterEditMode();
+                setTimeout(function() {
+                    taskInput.focus();
+                }, 300);
+            }
+        }
+        
+        // Actualizar contador de tareas
+        function updateTaskCounter() {
+            var activeTasks = tasks.filter(function(task) {
+                return !task.completed;
+            }).length;
+            
+            if (tasks.length === 0) {
+                taskCounter.textContent = '';
+            } else {
+                taskCounter.textContent = activeTasks + ' pendientes, ' + 
+                                        (tasks.length - activeTasks) + ' completadas';
+            }
+        }
+        
+        // Cargar tareas desde localStorage
+        function loadTasks() {
+            var savedTasks = localStorage.getItem('kindle-tasks-v3');
+            if (savedTasks) {
+                try {
+                    tasks = JSON.parse(savedTasks);
+                } catch (e) {
+                    tasks = [];
+                }
+            }
+            renderTasks();
+        }
+        
+        // Guardar tareas en localStorage
+        function saveTasks() {
+            localStorage.setItem('kindle-tasks-v3', JSON.stringify(tasks));
+        }
+        
+        // Mostrar todas las tareas
+        function renderTasks() {
+            taskList.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                var emptyMsg = document.createElement('li');
+                emptyMsg.className = 'empty-message';
+                emptyMsg.textContent = 'Sin tareas pendientes';
+                taskList.appendChild(emptyMsg);
+                updateTaskCounter();
+                return;
+            }
+            
+            for (var i = 0; i < tasks.length; i++) {
+                var li = document.createElement('li');
+                li.className = 'task-item';
+                if (tasks[i].completed) {
+                    li.className += ' completed';
+                }
+                
+                var taskText = document.createElement('span');
+                taskText.className = 'task-text';
+                taskText.textContent = tasks[i].text;
+                
+                var deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-button';
+                deleteBtn.textContent = '×';
+                deleteBtn.setAttribute('data-index', i);
+                
+                li.appendChild(taskText);
+                li.appendChild(deleteBtn);
+                li.setAttribute('data-index', i);
+                
+                taskList.appendChild(li);
+            }
+            
+            updateTaskCounter();
+        }
+        
+        // Agregar nueva tarea
+        function addTask() {
+            var text = taskInput.value.trim();
+            if (text === '') return;
+            
+            tasks.unshift({
+                text: text,
+                completed: false
+            });
+            
+            taskInput.value = '';
+            saveTasks();
+            renderTasks();
+            
+            // Mantener en modo edición para añadir más tareas
+            taskInput.focus();
+        }
+        
+        // Cambiar estado de tarea
+        function toggleTask(index) {
+            tasks[index].completed = !tasks[index].completed;
+            saveTasks();
+            renderTasks();
+        }
+        
+        // Eliminar tarea
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            saveTasks();
+            renderTasks();
+        }
+        
+        // Event listeners
+        editButton.addEventListener('click', toggleEditMode);
+        
+        addButton.addEventListener('click', addTask);
+        
+        taskInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+        
+        // Cerrar modo edición con Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isEditMode) {
+                enterViewMode();
+            }
+        });
+        
+        taskList.addEventListener('click', function(e) {
+            var element = e.target;
+            
+            // Click en botón eliminar
+            if (element.className === 'delete-button') {
+                var index = parseInt(element.getAttribute('data-index'));
+                deleteTask(index);
+                e.stopPropagation();
+                return;
+            }
+            
+            // Click en texto de tarea
+            if (element.className === 'task-text') {
+                element = element.parentElement;
+            }
+            
+            // Click en elemento li
+            if (element.className.indexOf('task-item') !== -1) {
+                var index = parseInt(element.getAttribute('data-index'));
+                toggleTask(index);
+            }
+        });
+        
+        // Cargar tareas al iniciar
+        loadTasks();
+        
+        // Asegurar modo vista al cargar
+        enterViewMode();
+    </script>
+</body>
+</html>
